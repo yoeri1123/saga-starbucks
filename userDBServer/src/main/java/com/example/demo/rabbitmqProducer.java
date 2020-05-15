@@ -19,5 +19,12 @@ public class rabbitmqProducer {
     		System.out.println(e.toString());
     	}
     }
-
+    
+    public void sendVerifyCreditUSer(String orderId) {
+    	 rabbitTemplate.convertAndSend("q.verifyCreditUser", orderId);
+    }
+    
+    public void sendRejectCreditUser(String orderId) {
+   	 	rabbitTemplate.convertAndSend("q.rejectCreditUser", orderId);
+    }
 }

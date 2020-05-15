@@ -9,6 +9,7 @@ public class sagaRabbitmqProducer {
     @Autowired
     private RabbitTemplate rabbitTemplate;
 
+    //Transaction
     public void sendOrderEmpty(String orderId){
         rabbitTemplate.convertAndSend("q.createEmptyOrder", orderId);
     }
@@ -18,10 +19,15 @@ public class sagaRabbitmqProducer {
         rabbitTemplate.convertAndSend("q.updateOrder", message);
     }
     
+    public void sendCreateCreditUser(String orderId) {
+        rabbitTemplate.convertAndSend("q.createCreditUser", orderId);    	
+    }
+    
     //Compensting Transaction
     public void rejectUpdateOrder(String orderId) {
-        rabbitTemplate.convertAndSend("q.createEmptyOrder", orderId);    	
+        rabbitTemplate.convertAndSend("q.rejectEmptyOrder", orderId);    	
     }
+    
     
     
 

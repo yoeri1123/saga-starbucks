@@ -9,8 +9,16 @@ public class rabbitmqProducer {
     @Autowired
     private RabbitTemplate rabbitTemplate;
 
-    public void sendHello(String content){
-        rabbitTemplate.convertAndSend("q.yoeri", content);
+    
+    public void sendVerifyEmptyOrder(String orderId){
+        rabbitTemplate.convertAndSend("q.verifyEmptyOrder", orderId);
     }
-
+    
+    public void sendVerifyOrder(String orderId) {
+    	rabbitTemplate.convertAndSend("q.verifyUpdateOrder", orderId);
+    }
+    
+    public void sendRejectOrder(String orderId) {
+    	
+    }
 }

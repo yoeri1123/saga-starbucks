@@ -23,5 +23,8 @@ public class user {
 
     @Column
     private String order_id;
+    
+    @Column
+    private String credit_status;
 
 }

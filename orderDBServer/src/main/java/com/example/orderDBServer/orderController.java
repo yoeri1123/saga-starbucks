@@ -20,24 +20,10 @@ public class orderController {
     @Autowired
     rabbitmqProducer rabbitmqProducer;
 
-    //µ¥ÀÌÅÍ ÀÏ°ü¼º À¯Áö
+    //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ï°ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
     @Transactional(isolation = Isolation.READ_COMMITTED)    
     @PostMapping("/saveOrder")
     public String saveOrder(orders param){
-//        try{
-//        	System.out.println(param.getOrder_id());
-//        	orders od=orderDAO.findOrderId(param.getOrder_id());
-//        	
-//        	System.out.println(od.getOrder_id());
-//        	System.out.println(param.getMenu_id());
-//        	orderDAO.updateOrder(param);
-//        	getAllOrder();
-//        	rabbitmqProducer.sendHello(param.getOrder_id());
-//
-//        }catch(Exception e){
-//            System.out.println(e.toString());
-//        }
-//        return "";
     	return "NoComeIN";
     }
     
@@ -45,17 +31,6 @@ public class orderController {
     @GetMapping("/saveEmptyOrder/{order_id}")
     public String saveEmptyOrder(@PathVariable String order_id) {
     	System.out.println(order_id);
-//    	orders od=new orders();
-//    	od.setOrder_id(order_id);
-//    	od.setOrder_status("ORDER_EMPTY");
-//    	try {
-//    		orderDAO.save(od);
-//    		return "SUCCEESS";
-//    	}
-//    	catch(Exception e) {
-//    		System.out.println(e.toString());
-//    		return e.toString();
-//    	}
     	return "NoComeIN";
     }
     
@@ -105,6 +80,15 @@ public class orderController {
     	}
     }
 
+    @Transactional(isolation = Isolation.READ_COMMITTED)    
+    @RabbitListener(queues = "q.compUpdateUser")
+    public void compUpdateUserListen(String order_id) {
+    	// reject credit update
+        System.out.println("Consumng : "+order_id);
+        orderDAO.updateOrderStatus(order_id, "ORDER_REJECT");
+        this.getAllOrder();
+        rabbitmqProducer.sendCompVerifyRejectOrder(order_id);
+    }
     
     @RabbitListener(queues = "q.verfiyUser")
     public void listen(String message){

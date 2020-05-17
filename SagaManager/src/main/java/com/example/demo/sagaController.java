@@ -141,8 +141,23 @@ public class sagaController {
         System.out.println("Consumng : "+order_id);
         sagaDAO.updateOrderStatus(order_id, "ORDER_UPDATE_CREDIT_REJECT");
         this.getAllOrder();
+        
+        // order에 취소 시켜야 함. 
+        // order_status reject 시켜야 함. 
+        rabbitmqProducer.compUpdateUser(order_id);
+        
     }
 
+    @Transactional(isolation = Isolation.READ_COMMITTED)    
+    @RabbitListener(queues = "q.rejectCreditUser")
+    public void compVerifyRejectOrder(String order_id) {
+    	System.out.println("Consuming : "+order_id);
+    	sagaDAO.updateOrderStatus(order_id, "ORDER_COMP_VERIFY");
+    	//front에게 거래 실패했다고 알려주기(2020.05.17) 여기서부터 시작하세여
+    	HttpResponse response = Unirest.post(front_url)
+				.field("order_status", "ORDER_COMP_VERIFY")
+				.field("order_id", order_id).asString();
+    }
     
     @Transactional(isolation = Isolation.SERIALIZABLE)    
     public void checkOrderStatus(String order_id) {
@@ -170,6 +185,7 @@ public class sagaController {
             		sagaDAO.updateOrderStatus(order_id, "ORDER_SUCCESS"); 
     			}else {
     				// reject 태워야 함.
+    				
     			}
 
     			System.out.println("쏨?");

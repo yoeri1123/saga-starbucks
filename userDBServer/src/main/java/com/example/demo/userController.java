@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -19,7 +20,27 @@ public class userController {
     
     @Autowired
 	private rabbitmqProducer rabbitmqProducer;
-	
+
+    @Transactional(isolation = Isolation.READ_COMMITTED)    
+    @PostMapping("/creditUpdate")
+    public String creditUpdate(user u) {
+    	if(u.getCredit_status().equals("ok")) {
+        	try {
+        		userDAO.updateOrderStatus(u.getOrder_id(), u.getCredit_status());
+	        	rabbitmqProducer.sendVerifyCreditUSer(u.getOrder_id());
+        	}catch(Exception e) {
+        		System.out.println(e.toString());
+        		return e.toString();
+        	}
+    		
+    	}else {
+        	userDAO.deleteOrder(u.getOrder_id());
+    		rabbitmqProducer.sendRejectCreditUser(u.getOrder_id());
+    	}
+		return "";
+    }
+
+    
     @RabbitListener(queues = "q.yoeri")
     public void listen(String message){
     	
@@ -35,7 +56,7 @@ public class userController {
     @RabbitListener(queues = "q.createCreditUser")
     public void createCreditUserListen(String order_id) {
     	try {
-    		// order_id °¡ ¾Æ¿¹ ¾ø´Â °æ¿ì¿¡¸¸ ÀûÀçÇÏ±â
+    		// order_id ï¿½ï¿½ ï¿½Æ¿ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ì¿¡ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï±ï¿½
     		user u =userDAO.findOrderId(order_id);
     		System.out.println(u.getOrder_id());
     	}catch(Exception e) {
@@ -46,9 +67,8 @@ public class userController {
 	        try {
 	        	userDAO.save(u);
 	        	getAllOrder();
-	        	rabbitmqProducer.sendVerifyCreditUSer(order_id);
 	        }catch(Exception e1) {
-	        	rabbitmqProducer.sendRejectCreditUser(order_id);
+	        	System.out.println(e1.toString());
 	        }
     	}
     }

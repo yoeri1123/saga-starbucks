@@ -21,4 +21,7 @@ public class rabbitmqProducer {
     public void sendRejectOrder(String orderId) {
     	
     }
+    public void sendCompVerifyRejectOrder(String orderId) {
+    	rabbitTemplate.convertAndSend("q.compVerifyRejectOrder", orderId);
+    }
 }

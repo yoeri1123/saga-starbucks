@@ -14,6 +14,11 @@ public class sagaRabbitmqProducer {
         rabbitTemplate.convertAndSend("q.createEmptyOrder", orderId);
     }
     
+    //Compensting Transaction
+    public void rejectUpdateOrder(String orderId) {
+        rabbitTemplate.convertAndSend("q.rejectEmptyOrder", orderId);    	
+    }
+    
     public void sendUpdateOrder(String orderId, String menuId, String optionId) {
     	String message=orderId+"$"+menuId+"$"+optionId;
         rabbitTemplate.convertAndSend("q.updateOrder", message);
@@ -24,9 +29,14 @@ public class sagaRabbitmqProducer {
     }
     
     //Compensting Transaction
-    public void rejectUpdateOrder(String orderId) {
-        rabbitTemplate.convertAndSend("q.rejectEmptyOrder", orderId);    	
+    public void rejectCreditUser(String orderId) {
+    	
     }
+    public void compUpdateUser(String orderId) {
+        rabbitTemplate.convertAndSend("q.compUpdateUser", orderId);    	    	
+    }
+    
+    
     
     
     

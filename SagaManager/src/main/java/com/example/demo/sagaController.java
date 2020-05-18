@@ -24,7 +24,9 @@ public class sagaController {
 	final String front_ip=System.getenv("FRONT_IP");
 	final String front_port = System.getenv("FRONT_PORT");
 	
-	final String front_url = "http://"+ front_ip + ":" + front_port + "/orderSuccess";
+	final String front_success_url = "http://"+ front_ip + ":" + front_port + "/orderSuccess";
+	final String front_fail_url = "http://"+ front_ip + ":" + front_port + "/orderFail";
+
 	
     @Autowired
     public sagaDAO sagaDAO;
@@ -122,7 +124,7 @@ public class sagaController {
     public void verifyCreditUserListen(String order_id){
     	System.out.println("=================================================");
     	System.out.println("VerifyCreditUser Queue Come");
-    	System.out.println(front_url);
+    	System.out.println(front_success_url);
         System.out.println("Consumng : "+order_id);
         try {
             sagaDAO.updateOrderStatus(order_id, "ORDER_UPDATE_CREDIT_VERIFY");
@@ -149,14 +151,15 @@ public class sagaController {
     }
 
     @Transactional(isolation = Isolation.READ_COMMITTED)    
-    @RabbitListener(queues = "q.rejectCreditUser")
+    @RabbitListener(queues = "q.compVerifyRejectOrder")
     public void compVerifyRejectOrder(String order_id) {
     	System.out.println("Consuming : "+order_id);
     	sagaDAO.updateOrderStatus(order_id, "ORDER_COMP_VERIFY");
     	//front에게 거래 실패했다고 알려주기(2020.05.17) 여기서부터 시작하세여
-    	HttpResponse response = Unirest.post(front_url)
+    	HttpResponse response = Unirest.post(front_fail_url)
 				.field("order_status", "ORDER_COMP_VERIFY")
 				.field("order_id", order_id).asString();
+    	System.out.println(response.getBody().toString());
     }
     
     @Transactional(isolation = Isolation.SERIALIZABLE)    
@@ -174,21 +177,21 @@ public class sagaController {
     		case "ORDER_UPDATE_CREDIT_VERIFY":
     			System.out.println("order_credit_verify come?");
     			//HttpResponse httpresponse
-    			HttpResponse response = Unirest.post(front_url)
+    			HttpResponse response = Unirest.post(front_success_url)
     					.field("order_status", "ORDER_UPDATE_CREDIT_VERIFY")
     					.field("order_id", order_id).asString();
     			System.out.println(response.getBody().toString());
     	    	String[] strarr=response.getBody().toString().split("\\$");
-    	    	System.out.println(strarr[0]+" "+strarr[1]);
-    					
-    			if (response.getBody().toString().equals("FRONT_OK")) {
+    	    	System.out.println(strarr[0]+" "+strarr[1]+" "+strarr[2]);
+    			String message=strarr[1]+"$"+strarr[2];	
+    			if (strarr[0].equals("FRONT_OK")) {
             		sagaDAO.updateOrderStatus(order_id, "ORDER_SUCCESS"); 
+            		rabbitmqProducer.sendUpdateOrderDatetime(message);
     			}else {
     				// reject 태워야 함.
-    				
+    				sagaDAO.updateOrderStatus(order_id, "ORDER_ALL_REJECT");
+    				rabbitmqProducer.sendRejectOrder(order_id);
     			}
-
-    			System.out.println("쏨?");
     			break;
     		default:	
     			break;

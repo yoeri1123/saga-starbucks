@@ -35,8 +35,17 @@ public interface orderDAO extends CrudRepository<orders, Long> {
     @Query(value="update orders o set o.order_status= :order_status where o.order_id= :order_id",  nativeQuery=false)
     void updateOrderStatus(@Param("order_id") String order_id, @Param("order_status") String order_status);
     
+    @Modifying
+    @Query(value="update orders o set o.datetime= :datetime, o.order_status= :order_status where o.order_id= :order_id",  nativeQuery=false)
+    void updateOrderDatetime(@Param("order_id") String order_id, 
+    		@Param("datetime") String datetime, 
+    		@Param("order_status") String order_status);
+    
+    
     default orders findOne(Long id){
         return (orders) findById(id).orElse(null);
     }
+    
+    
 
 }

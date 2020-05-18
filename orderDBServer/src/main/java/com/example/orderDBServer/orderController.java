@@ -83,12 +83,25 @@ public class orderController {
     @Transactional(isolation = Isolation.READ_COMMITTED)    
     @RabbitListener(queues = "q.compUpdateUser")
     public void compUpdateUserListen(String order_id) {
-    	// reject credit update
+    	// reject credit update, order reject 처리 후, front로 가서 거래 취소됬다고 말해줘야 함. 
         System.out.println("Consumng : "+order_id);
         orderDAO.updateOrderStatus(order_id, "ORDER_REJECT");
         this.getAllOrder();
         rabbitmqProducer.sendCompVerifyRejectOrder(order_id);
     }
+    
+    @Transactional(isolation = Isolation.READ_COMMITTED)    
+    @RabbitListener(queues = "q.updateOrderDatetime")
+    public void UpdateOrderDatetimeListen(String message) {
+    	// order success 후, 최종 datetime 저장해야 함. 
+        System.out.println("Consumng : "+message);
+    	String[] strarr=message.split("\\$");
+    	// datetime과 status 를 저장한다. 
+        orderDAO.updateOrderDatetime(strarr[1], strarr[0], "ORDER_SUCCESS");
+        this.getAllOrder();
+    }
+    
+    
     
     @RabbitListener(queues = "q.verfiyUser")
     public void listen(String message){

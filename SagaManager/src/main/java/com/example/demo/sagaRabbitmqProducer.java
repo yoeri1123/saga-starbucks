@@ -29,11 +29,15 @@ public class sagaRabbitmqProducer {
     }
     
     //Compensting Transaction
-    public void rejectCreditUser(String orderId) {
-    	
+    public void sendRejectOrder(String orderId) {
+    	rabbitTemplate.convertAndSend("q.rejectOrder", orderId);    	
     }
     public void compUpdateUser(String orderId) {
         rabbitTemplate.convertAndSend("q.compUpdateUser", orderId);    	    	
+    }
+    
+    public void sendUpdateOrderDatetime(String message) {
+    	rabbitTemplate.convertAndSend("q.updateOrderDatetime", message);
     }
     
     

@@ -56,7 +56,7 @@ public class userController {
     @RabbitListener(queues = "q.createCreditUser")
     public void createCreditUserListen(String order_id) {
     	try {
-    		// order_id �� �ƿ� ���� ��쿡�� �����ϱ�
+    		// order_id 占쏙옙 占싣울옙 占쏙옙占쏙옙 占쏙옙荑∽옙占� 占쏙옙占쏙옙占싹깍옙
     		user u =userDAO.findOrderId(order_id);
     		System.out.println(u.getOrder_id());
     	}catch(Exception e) {
@@ -80,5 +80,14 @@ public class userController {
     	}
 		return od;
     }
+    
+    @Transactional(isolation = Isolation.READ_COMMITTED)    
+    @RabbitListener(queues = "q.rejectOrder")
+    public void rejectOrder(String order_id) {
+    	userDAO.deleteOrder(order_id);
+		rabbitmqProducer.sendRejectCreditUser(order_id);
+    	
+    }
+    
 
 }
